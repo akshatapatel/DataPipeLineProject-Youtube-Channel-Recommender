@@ -15,11 +15,11 @@ class LoadModel():
     with open('one_mill_trained_model.pkl', 'rb') as fp:
         w2v = pickle.load(fp)
 
-class GetPredData(): #params - RequestHandler, MySQLdb.connections.Connection
+class GetPredData():
     def get_data(self):
-        # mydb = MySQLdb.connect(host="127.0.0.1", user="root", passwd="DataPipeline", db = "DataPipeline")
-        # youtube_data = pd.read_sql("""SELECT * from USVideos""",con=mydb)
-        youtube_data = pd.read_csv('USVideos_updated.csv')
+        mydb = MySQLdb.connect(host="127.0.0.1", user="root", passwd="DataPipeline", db = "DataPipeline")
+        youtube_data = pd.read_sql("""SELECT * from USVideos""",con=mydb)
+        # youtube_data = pd.read_csv('USVideos_updated.csv')
         return youtube_data
 
 
@@ -104,22 +104,6 @@ class RecommendationHandler(PredictHandler):
         top_5_channels = df_category.iloc[:10].sort_values(by=['diff_likes_dislikes'], ascending=False).iloc[:5]
         list_of_names = top_5_channels['channel_title'].iloc[:5].values
         return ",".join(list_of_names)
-
-
-# In[85]:
-
-
-# rh = RecommendationHandler()
-# recommendations = rh.recommend_channel()
-
-
-# # In[86]:
-
-
-# print(recommendations)
-
-
-# In[ ]:
 
 
 

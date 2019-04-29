@@ -11,6 +11,22 @@
 </head>
 
 <style>
+.loader {
+  display: none;
+  border: 16px solid #f3f3f3; /* Light grey */
+  border-top: 16px solid #3498db; /* Blue */
+  border-radius: 50%;
+  width: 75px;
+  height: 75px;
+  animation: spin 2s linear infinite;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
 .jumbotron { 
   background-color: #f4511e; /* Orange */
   color: #ffffff;
@@ -21,6 +37,12 @@
 #recommendations
 {
   display: none;
+}
+
+#submit
+{
+  margin-right: auto;
+  margin-left: auto;
 }
 </style>
 
@@ -43,6 +65,9 @@
     var video_category =document.getElementById("selected_video").textContent;
     if ((product_category != "Choose an option" ) && (video_category != "Choose an option"))
     {
+      document.getElementById("submit").style.display = "none";
+      document.getElementById("recommendations").style.display = "none";
+      document.getElementById("loader").style.display = "block";
       var client = new HttpClient();
       client.get('http://127.0.0.1:3000/recommend?product_category='+product_category+'&video_category='+video_category, function(response) {
           var response_list = response.split(",")
@@ -51,8 +76,10 @@
           document.getElementById("channel3").textContent = response_list[2]
           document.getElementById("channel4").textContent = response_list[3]
           document.getElementById("channel5").textContent = response_list[4]
+          document.getElementById("loader").style.display = "none";
+          document.getElementById("submit").style.display = "block";
           document.getElementById("recommendations").style.display = "block";
-          console.log(response)
+                    console.log(response)
       });
       
     }
@@ -116,7 +143,12 @@
 </div>
 <div class="row margin">
   <div class="col-md-12 school-options-dropdown text-center">
-<button type="button" class="btn btn-primary btn-md" onclick="GetRecommendations();">Submit</button>
+<button type="button" class="btn btn-primary btn-md" id="submit" onclick="GetRecommendations();">Submit</button>
+</div>
+</div>
+<div class="row margin">
+  <div class="col-md-12 school-options-dropdown text-center">
+<div class="loader text-center" id="loader"></div>
 </div>
 </div>
 </div>
