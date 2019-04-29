@@ -16,11 +16,11 @@ class LoadModel():
         w2v = pickle.load(fp)
 
 class GetPredData(): #params - RequestHandler, MySQLdb.connections.Connection
-    user_data = pd.DataFrame({'Product Category': 'makeup','Video Category': 'style'}, index=[0])
     def get_data(self):
-        mydb = MySQLdb.connect(host="127.0.0.1", user="root", passwd="DataPipeline", db = "DataPipeline")
-        youtube_data = pd.read_sql("""SELECT * from USVideos""",con=mydb)
-        return self.user_data,youtube_data
+        # mydb = MySQLdb.connect(host="127.0.0.1", user="root", passwd="DataPipeline", db = "DataPipeline")
+        # youtube_data = pd.read_sql("""SELECT * from USVideos""",con=mydb)
+        youtube_data = pd.read_csv('USVideos_updated.csv')
+        return youtube_data
 
 
 # In[78]:
@@ -28,10 +28,8 @@ class GetPredData(): #params - RequestHandler, MySQLdb.connections.Connection
 
 class PredictHandler(GetPredData):
     def get_text(self):
-        user_data, youtube_data= self.get_data()
-        user_pc = self.user_data['Product Category'][0]
-        user_vc = self.user_data['Video Category'][0]
-        return user_pc, user_vc, youtube_data
+        youtube_data= self.get_data()
+        return youtube_data
     
     def get_similarity_score(self,user_pc, user_vc, yt_cn, yt_t):
         
@@ -81,8 +79,10 @@ class PredictHandler(GetPredData):
         similarity_score = ((0.5*pc_avg )+ (0.5*vc_avg))/2
         return similarity_score
     
-    def predict(self):
-        user_pc, user_vc, youtube_data = self.get_text()
+    def predict(self, product_category, video_category):
+        user_pc = product_category
+        user_vc = video_category
+        youtube_data = self.get_text()
         yt_cn_all = youtube_data['category_name'].str[:-1]
         yt_t_all = youtube_data['tags']
         similarity_score_all = []
@@ -96,26 +96,27 @@ class PredictHandler(GetPredData):
 
 
 class RecommendationHandler(PredictHandler):
-    def recommend_channel(self):
-        similarity_score_all, youtube_data = np.array(self.predict())
+    def recommend_channel(self, product_category, video_category):
+        similarity_score_all, youtube_data = np.array(self.predict(product_category, video_category))
         youtube_data['similarity_score'] = similarity_score_all
         df_category = youtube_data.groupby('channel_title', as_index=False).mean().sort_values(by=['similarity_score'], ascending=False)
         df_category['diff_likes_dislikes'] = df_category['likes'] - df_category['dislikes']
         top_5_channels = df_category.iloc[:10].sort_values(by=['diff_likes_dislikes'], ascending=False).iloc[:5]
-        return top_5_channels[['channel_title','likes','dislikes']]
+        list_of_names = top_5_channels['channel_title'].iloc[:5].values
+        return ",".join(list_of_names)
 
 
 # In[85]:
 
 
-rh = RecommendationHandler()
-recommendations = rh.recommend_channel()
+# rh = RecommendationHandler()
+# recommendations = rh.recommend_channel()
 
 
-# In[86]:
+# # In[86]:
 
 
-print(recommendations)
+# print(recommendations)
 
 
 # In[ ]:
