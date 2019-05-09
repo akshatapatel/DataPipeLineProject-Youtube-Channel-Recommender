@@ -8,6 +8,7 @@ import json
 from gensim import models
 import pickle
 import indico
+import get_thumbnail_tags
 
 
 # In[77]:
@@ -24,7 +25,6 @@ class GetPredData():
         return youtube_data
 
 
-# In[78]:
 
 
 class PredictHandler(GetPredData):
@@ -32,37 +32,61 @@ class PredictHandler(GetPredData):
         youtube_data= self.get_data()
         return youtube_data
     
-    def get_similarity_score(self,user_pc, user_vc, yt_cn, yt_t):
-        
+    def get_similarity_score(self,user_pc, user_vc, user_desc_df, user_weight, yt_cn, yt_t, yt_thumb_kw): #add thumbnail once done
+
         load_model = LoadModel()
-        list_pc = [word for word in user_pc.split() if word in load_model.w2v.vocab]
+
+        #convert category name to a list of words - if the word is in the word2vec vocab
         list_cn = [word for word in yt_cn.split() if word in load_model.w2v.vocab]
+        list_kw = [word for word in yt_thumb_kw if word in load_model.w2v.vocab]
+       
+
+        #convert product category to a list of words - if the word is in the word2vec vocab
+        list_pc = [word for word in user_pc.split() if word in load_model.w2v.vocab]
         
-        if list_pc and list_cn:
+
+        if list_pc and list_cn: #if lists are both non-empty, calculate their similarity
             pc_cn_similarity = load_model.w2v.n_similarity(list_pc, list_cn)
         else:
             pc_cn_similarity = 0.0
+
+
+        if list_pc and list_kw: #if lists are both non-empty, calculate their similarity
+            pc_kw_similarity = load_model.w2v.n_similarity(list_pc, list_kw)
+        else:
+            pc_kw_similarity = 0.0
             
         pc_tag_similarity = []
-        for tag in yt_t.split('|'):
+        #MODIFY FOR TAG FORMAT
+        for tag in yt_t.split('|'): #for each tag, repeat the same procedure as above
             list_tag = [word for word in tag.split() if word in load_model.w2v.vocab]
-            if list_pc and list_tag:
+            if list_pc and list_tag: #if lists are both non-empty, calculate their similarity
                 pc_tag_similarity.append(load_model.w2v.n_similarity(list_pc, list_tag))
             else:
                 pc_tag_similarity.append(0.0)
+
         pc_tag_similarity = np.array(pc_tag_similarity)
-        pc_tag_similarity_avg = np.average(pc_tag_similarity[np.flip(np.argsort(pc_tag_similarity))[:5]])
+        pc_tag_similarity_avg = np.average(pc_tag_similarity[np.flip(np.argsort(pc_tag_similarity))[:5]]) #get the average score of the top 5 most similar tags
 
         
-        
+
+        #repeat the same for video category
         list_vc = [word for word in user_vc.split() if word in load_model.w2v.vocab]
         
         if list_vc and list_cn:
             vc_cn_similarity = load_model.w2v.n_similarity(list_vc, list_cn)
         else:
             vc_cn_similarity = 0.0
+
+
+        if list_vc and list_kw: #if lists are both non-empty, calculate their similarity
+            vc_kw_similarity = load_model.w2v.n_similarity(list_vc, list_kw)
+        else:
+            vc_kw_similarity = 0.0
             
+
         vc_tag_similarity = []
+        #MODIFY FOR TAG FORMAT
         for tag in yt_t.split('|'):
             list_tag = [word for word in tag.split() if word in load_model.w2v.vocab]
             if list_vc and list_tag:
@@ -73,37 +97,110 @@ class PredictHandler(GetPredData):
         vc_tag_similarity = np.array(vc_tag_similarity)
         vc_tag_similarity_avg = np.average(vc_tag_similarity[np.flip(np.argsort(vc_tag_similarity))[:5]])
         
+        #repeat the same for product description
 
-        pc_avg = np.average((pc_cn_similarity, pc_tag_similarity_avg))
-        vc_avg = np.average((vc_cn_similarity, vc_tag_similarity_avg))
 
-        similarity_score = ((0.5*pc_avg )+ (0.5*vc_avg))/2
+        #convert description to a list of words - if the word is in the word2vec vocab
+        list_desc_all = [word for word in user_desc_df.word if word in load_model.w2v.vocab]
+        list_desc_weights = [user_desc_df.weight[ind] for ind,word in enumerate(user_desc_df.word) if word in load_model.w2v.vocab] #get corresponding weights
+
+        desc_cn_similarity_each = []
+
+        #if both lists are not empty, get similarity of every word in the description to the category name
+        if list_desc_all and list_cn:
+            for keywrd in list_desc_all:
+                desc_cn_similarity_each.append(load_model.w2v.n_similarity([keywrd], list_cn))
+
+            desc_cn_similarity = np.average((desc_cn_similarity_each), weights = list_desc_weights) #average out all similarities based on the keyword wieghts
+
+        else:
+            desc_cn_similarity = 0.0
+
+
+        desc_kw_similarity_each = []
+
+        if list_desc_all and list_kw:
+            for keywrd in list_desc_all:
+                desc_kw_similarity_each.append(load_model.w2v.n_similarity([keywrd], list_kw))
+
+            desc_kw_similarity = np.average((desc_kw_similarity_each), weights = list_desc_weights) #average out all similarities based on the keyword wieghts
+
+        else:
+            desc_kw_similarity = 0.0
+
+
+
+        desc_tag_similarity = []
+
+        #MODIFY FOR TAG FORMAT
+        for tag in yt_t.split('|'): #for each tag
+            list_tag = [word for word in tag.split() if word in load_model.w2v.vocab]
+            #if both lists are not empty, get similarity of every word in the description to the tag
+            desc_tag_similarity_each = []
+            if list_desc_all and list_tag:
+                for keywrd in list_desc_all:
+                    desc_tag_similarity_each.append(load_model.w2v.n_similarity([keywrd], list_tag))
+
+
+                desc_tag_similarity.append(np.average((desc_tag_similarity_each), weights = list_desc_weights)) #average out all similarities based on the keyword wieghts
+
+            else:
+                desc_tag_similarity.append(0.0)
+
+        desc_tag_similarity = np.array(desc_tag_similarity)
+        desc_tag_similarity_avg = np.average(desc_tag_similarity[np.flip(np.argsort(desc_tag_similarity))[:5]])  #get the average score of the top 5 most similar tags
+
+
+        #get average similarity value for each - product category, video category and product description
+        pc_avg = np.average((pc_cn_similarity, pc_tag_similarity_avg, pc_kw_similarity))
+        vc_avg = np.average((vc_cn_similarity, vc_tag_similarity_avg, vc_kw_similarity))
+        desc_avg = np.average((desc_cn_similarity, desc_tag_similarity_avg, desc_kw_similarity))
+
+        similarity_score = np.average((pc_avg,vc_avg,desc_avg), weights = user_weight) #perform weighted average of the above, based on weights provided by user
+
         return similarity_score
     
-    def predict(self, product_category, video_category):
+    def predict(self, product_category, video_category, product_description, weightage):
         user_pc = product_category
         user_vc = video_category
+        user_desc = product_description
+        user_weight = weightage
+
         youtube_data = self.get_text()
         yt_cn_all = youtube_data['category_name'].str[:-1]
         yt_t_all = youtube_data['tags']
+        yt_thumbnail_all = youtube_data['thumbnail_link'] #CHANGE BASED ON PRE-COMPUTED INFO
+
         similarity_score_all = []
+
+        sent = indico.TextAnalysis()
+        user_desc_df = sent.get_keywords(user_desc)
+
+        thumb_tag = get_thumbnail_tags.ThumbnailTags() #CHANGE BASED ON PRE-COMPUTED INFO
         for i in range(yt_cn_all.shape[0]):
-            similarity_score_all.append(self.get_similarity_score(user_pc, user_vc, yt_cn_all.iloc[i], yt_t_all.iloc[i]))
+            print(i)
+
+            yt_thumb_kw = thumb_tag.get_tags(yt_thumbnail_all.iloc[i]) #CHANGE BASED ON PRE-COMPUTED INFO
+            similarity_score_all.append(self.get_similarity_score(user_pc, user_vc, user_desc_df, user_weight, yt_cn_all.iloc[i], yt_t_all.iloc[i], yt_thumb_kw)) 
+            #add thumbnail if done
 
         return similarity_score_all, youtube_data
 
 
-# In[84]:
-
 
 class RecommendationHandler(PredictHandler):
-    def recommend_channel(self, product_category, video_category):
-        similarity_score_all, youtube_data = np.array(self.predict(product_category, video_category))
+    def recommend_channel(self, product_category, video_category, product_description, weightage): #ADD COMMENTS SENTIMENT FEATURE
+        similarity_score_all, youtube_data = np.array(self.predict(product_category, video_category, product_description, weightage))
+        sent = indico.TextAnalysis()
+
+        #yt_sentiment = sent.get_sentiment(list(youtube_data['comments'].values))
+
         youtube_data['similarity_score'] = similarity_score_all
         df_category = youtube_data.groupby('channel_title', as_index=False).mean().sort_values(by=['similarity_score'], ascending=False)
         df_category['diff_likes_dislikes'] = df_category['likes'] - df_category['dislikes']
         top_5_channels = df_category.iloc[:10].sort_values(by=['diff_likes_dislikes'], ascending=False).iloc[:5]
         list_of_names = top_5_channels['channel_title'].iloc[:5].values
+
         return ",".join(list_of_names)
 
 
