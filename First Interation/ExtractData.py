@@ -115,7 +115,7 @@ if __name__ == "__main__":
     res = main()
 
 
-df.to_csv('YoutubeData.csv')
+df.to_csv('YoutubeData.csv',index=False)
 
 
 
