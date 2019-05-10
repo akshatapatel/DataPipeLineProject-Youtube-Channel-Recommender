@@ -8,6 +8,7 @@
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
   <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 
 <style>
@@ -27,8 +28,11 @@
   100% { transform: rotate(360deg); }
 }
 .jumbotron { 
-  background-color: #f4511e; /* Orange */
-  color: #ffffff;
+  background-color: #7c7fc9; /* Orange */
+  color: white;
+}
+.main_background {
+  background-color: #cbbcd6;
 }
 .row{
   margin-top: 15px;
@@ -56,6 +60,14 @@
           anHttpRequest.send( null );
       }
   }
+
+  
+  
+  
+  console.log(document.getElementById("plot1_likes"))
+
+  
+
   function GetRecommendations(){
     var product_category= document.getElementById("selected_product").textContent;
     var video_category = document.getElementById("selected_video").textContent;
@@ -131,12 +143,12 @@
 
 
 
-<body>
+<body class='main_background'>
 
 <div class="jumbotron text-center">
   <h1>YouTube Channel Recommender</h1> 
 </div>
-<div class="container-fluid">
+<div class="container-fluid main_background">
   <h4 class="text-center">Choose a product category and a video category to get started</h4>
 <div class="row margin">
   <div class="col-md-12 school-options-dropdown text-center">
@@ -282,6 +294,87 @@
   </table>
 </div>
 
+<div class="container text-center" id="plots">
+  
+  <h4>Analysis of the results:</h4>
+  <div class='row'>
+    <div class='col-sm-6'><div id="plot1_likes"><!-- Plotly chart will be drawn inside this DIV --></div></div>
+    <div class='col-sm-6'><div id="plot2_dislikes"><!-- Plotly chart will be drawn inside this DIV --></div></div>
+    
+  </div>
+  
+  <div class='row'>
+    <div class='col-sm-4'> <div id="plot3_subscr"><!-- Plotly chart will be drawn inside this DIV --></div></div>
+    <div class='col-sm-4'><div id="plot4_views"><!-- Plotly chart will be drawn inside this DIV --></div></div>
+    <div class='col-sm-4'><div id="plot5_sentiment"><!-- Plotly chart will be drawn inside this DIV --></div></div>
+  </div>
+
+</div>
+<script>
+  var dict = {}; // create an empty array
+
+  dict["channel1"]=[10,10,10,10,10]
+  
+  dict["channel2"]=[20,20,20,20,20]
+  
+  dict["channel3"]=[15,15,15,15,15]
+  
+  dict["channel4"]=[5,5,5,5,5]
+  dict["channel5"]=[8,8,8,8,8]
+
+
+  data_likes = [{
+  x: ['channel1', 'channel2', 'channel3','channel4','channel5'],
+  y: [dict["channel1"][0],dict["channel2"][0],dict["channel3"][0],dict["channel4"][0],dict["channel5"][0]],
+  type: 'bar'
+  }];
+
+  Plotly.newPlot('plot1_likes', data_likes, 
+    {title: 'Count of Likes',
+    yaxis: {title: 'Count'},
+    xaxis: {title:'Channel Name'}}, {showSendToCloud:true});
+
+  data_dislikes = [{
+  x: ['channel1', 'channel2', 'channel3','channel4','channel5'],
+  y: [dict["channel1"][1],dict["channel2"][1],dict["channel3"][1],dict["channel4"][1],dict["channel5"][1]],
+  type: 'bar'
+  }];
+
+  Plotly.newPlot('plot2_dislikes', data_dislikes, {title: 'Count of Dislikes',
+    yaxis: {title: 'Count'},
+    xaxis: {title:'Channel Name'}}, {showSendToCloud:true});
+
+  data_subscr = [{
+  x: ['channel1', 'channel2', 'channel3','channel4','channel5'],
+  y: [dict["channel1"][2],dict["channel2"][2],dict["channel3"][2],dict["channel4"][2],dict["channel5"][2]],
+  type: 'bar'
+  }];
+
+  Plotly.newPlot('plot3_subscr', data_subscr, {title: 'Count of Subscribers',
+    yaxis: {title: 'Count'},
+    xaxis: {title:'Channel Name'}}, {showSendToCloud:true});
+
+  data_views = [{
+  x: ['channel1', 'channel2', 'channel3','channel4','channel5'],
+  y: [dict["channel1"][3],dict["channel2"][3],dict["channel3"][3],dict["channel4"][3],dict["channel5"][3]],
+  type: 'bar'
+  }];
+
+  Plotly.newPlot('plot4_views', data_views, {title: 'Count of Views',
+    yaxis: {title: 'Count'},
+    xaxis: {title:'Channel Name'}}, {showSendToCloud:true});
+
+  data_sentiment = [{
+  x: ['channel1', 'channel2', 'channel3','channel4','channel5'],
+  y: [dict["channel1"][4],dict["channel2"][4],dict["channel3"][4],dict["channel4"][4],dict["channel5"][4]],
+  type: 'bar'
+  }];
+
+  Plotly.newPlot('plot5_sentiment', data_sentiment, {title: 'Sentiment Score',
+  yaxis: {title: 'Score'},
+  xaxis: {title:'Channel Name'}}, {showSendToCloud:true});
+
+</script>
 <script type="text/javascript">
     var pref1=""
     var pref2=""
