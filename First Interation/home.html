@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>YouTube Channel Recommender</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+</head>
+
+<style>
+.loader {
+  display: none;
+  border: 16px solid #f3f3f3; /* Light grey */
+  border-top: 16px solid #3498db; /* Blue */
+  border-radius: 50%;
+  width: 75px;
+  height: 75px;
+  animation: spin 2s linear infinite;
+  margin-right: auto;
+  margin-left: auto;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.jumbotron { 
+  background-color: #f4511e; /* Orange */
+  color: #ffffff;
+}
+.row{
+  margin-top: 15px;
+}
+#recommendations
+{
+  display: none;
+}
+#submit
+{
+  margin-right: auto;
+  margin-left: auto;
+}
+</style>
+
+<script type="text/javascript">
+  var HttpClient = function() {
+      this.get = function(aUrl, aCallback) {
+          var anHttpRequest = new XMLHttpRequest();
+          anHttpRequest.onreadystatechange = function() { 
+              if (anHttpRequest.readyState == 4 && anHttpRequest.status == 200)
+                  aCallback(anHttpRequest.responseText);
+          }
+          anHttpRequest.open( "GET", aUrl, true );            
+          anHttpRequest.send( null );
+      }
+  }
+  function GetRecommendations(){
+    var product_category= document.getElementById("selected_product").textContent;
+    var video_category = document.getElementById("selected_video").textContent;
+    var product_descr = document.getElementById("product_descr").value;
+    var feature_imp_order1 = document.getElementById("selected_preference_1").textContent;
+    var feature_imp_order2 = document.getElementById("selected_preference_2").textContent;
+    var feature_imp_order3 = document.getElementById("selected_preference_3").textContent;
+    features = ['Product Category','Video Category','Product Description']
+    feature_wts = [0.5,0.3,0.2]
+    var feature_imp_order = [0,0,0]
+
+    if((feature_imp_order1 != "Choose an option" ) && (feature_imp_order2 != "Choose an option") && (feature_imp_order3 != "Choose an option"))
+      {
+
+        for (i = 0; i < 3; i++)
+        {
+          if (feature_imp_order1 == features[i])
+          {
+            feature_imp_order[i] = feature_wts[0]
+          }
+          else if (feature_imp_order2 == features[i])
+          {
+            feature_imp_order[i] = feature_wts[1]
+          }
+          else if (feature_imp_order3 == features[i])
+          {
+            feature_imp_order[i] = feature_wts[2]
+          }
+        }
+
+        if ((product_category != "Choose an option" ) && (video_category != "Choose an option") )
+        {
+          if (product_descr != "Add description here")
+          {
+            
+              document.getElementById("submit").style.display = "none";
+              document.getElementById("recommendations").style.display = "none";
+              document.getElementById("loader").style.display = "block";
+              var client = new HttpClient();
+              client.get('http://127.0.0.1:3000/recommend?product_category='+product_category+'&video_category='+video_category+'&product_description='+product_descr+'&feature_weights='+feature_imp_order, function(response) {
+                  var response_list = response.split(",")
+                  document.getElementById("channel1").textContent = response_list[0]
+                  document.getElementById("channel2").textContent = response_list[1]
+                  document.getElementById("channel3").textContent = response_list[2]
+                  document.getElementById("channel4").textContent = response_list[3]
+                  document.getElementById("channel5").textContent = response_list[4]
+                  document.getElementById("loader").style.display = "none";
+                  document.getElementById("submit").style.display = "block";
+                  document.getElementById("recommendations").style.display = "block";
+                            console.log(response)
+              });
+            
+          }
+          else
+          {
+            alert("Add product description")
+          }
+          
+        }
+        else{
+          alert("Choose product category and video category")
+        }
+
+      }
+      else
+      {
+        alert('Choose a value for each Feature preferences')
+      }
+    
+    
+  }
+</script>
+
+
+
+<body>
+
+<div class="jumbotron text-center">
+  <h1>YouTube Channel Recommender</h1> 
+</div>
+<div class="container-fluid">
+  <h4 class="text-center">Choose a product category and a video category to get started</h4>
+<div class="row margin">
+  <div class="col-md-12 school-options-dropdown text-center">
+    <h5>Select product category</h5>
+    <div class="dropdown btn-group">
+
+      <button class="btn btn dropdown-toggle" type="button" data-toggle="dropdown"><span id="selected_product">Choose an option</span>
+        <span class="caret"></span>
+      </button>
+
+      <ul class="dropdown-menu product_list">
+       <li><a href="#">Health and Fitness</a></li>
+    <li><a href="#">Fashion and Beauty</a></li>
+    <li><a href="#">Books and Literature</a></li>
+    <li><a href="#">Science and Technology</a></li>
+    <li><a href="#">Home and Kitchen</a></li>
+      </ul>
+
+    </div>
+  </div>
+</div>
+
+<div class="row margin">
+  <div class="col-md-12 school-options-dropdown text-center">
+    <h5>Select video category</h5>
+    <div class="dropdown btn-group">
+
+      <button class="btn btn dropdown-toggle" type="button" data-toggle="dropdown"><span id="selected_video">Choose an option</span>
+        <span class="caret"></span>
+      </button>
+
+      <ul class="dropdown-menu video_list">
+       <li><a href="#">Entertainment</a></li>
+    <li><a href="#">News and Politics</a></li>
+    <li><a href="#">Style and Beauty blogs</a></li>
+    <li><a href="#">Science and Technology</a></li>
+    <li><a href="#">Fitness and Sports</a></li>
+    <li><a href="#">Instructional and How to</a></li>
+      </ul>
+
+    </div>
+  </div>
+</div>
+
+<div class="row margin">
+  <div class="col-md-12 school-options-dropdown text-center">
+    <h5>Add product description</h5>
+    <div class="dropdown btn-group">
+
+      <textarea rows="6" cols="30" id="product_descr">Add description here</textarea>
+
+    </div>
+  </div>
+</div>
+
+<div class="row margin">
+  <div class="col-md-12 school-options-dropdown text-center">
+    <h5>Select Feature weights</h5>
+    <div class="dropdown btn-group">
+      <h6>Preference 1</h6>
+      <button class="btn btn dropdown-toggle" type="button" data-toggle="dropdown"><span id="selected_preference_1">Choose an option</span>
+        <span class="caret"></span>
+      </button>
+
+      <ul class="dropdown-menu pref_list1">
+       <li><a href="#" id='pref11'>Product Category</a></li>
+        <li><a href="#" id='pref12'>Video Category</a></li>
+        <li><a href="#" id='pref13'>Product Description</a></li>
+      </ul>
+    </div>
+    <div class="dropdown btn-group">
+      <h6>Preference 2</h6>
+      <button class="btn btn dropdown-toggle" type="button" data-toggle="dropdown"><span id="selected_preference_2">Choose an option</span>
+        <span class="caret"></span>
+      </button>
+
+      <ul class="dropdown-menu pref_list2">
+       <li><a href="#" id='pref21'>Product Category</a></li>
+        <li><a href="#" id='pref22'>Video Category</a></li>
+        <li><a href="#" id='pref23'>Product Description</a></li>
+      </ul>
+    </div>
+    <div class="dropdown btn-group">
+      <h6>Preference 3</h6>
+      <button class="btn btn dropdown-toggle" type="button" data-toggle="dropdown"><span id="selected_preference_3">Choose an option</span>
+        <span class="caret"></span>
+      </button>
+
+      <ul class="dropdown-menu pref_list3">
+       <li><a href="#" id='pref31'>Product Category</a></li>
+        <li><a href="#" id='pref32'>Video Category</a></li>
+        <li><a href="#" id='pref33'>Product Description</a></li>
+      </ul>
+
+    </div>
+  </div>
+</div>
+
+<div class="row margin">
+  <div class="col-md-12 school-options-dropdown text-center">
+<button type="button" class="btn btn-primary btn-md" id="submit" onclick="GetRecommendations();">Submit</button>
+</div>
+</div>
+<div class="row margin">
+  <div class="col-md-12 school-options-dropdown text-center">
+<div class="loader text-center" id="loader"></div>
+</div>
+</div>
+</div>
+
+<div class="container text-center" id="recommendations">
+  <h4>YouTube Channel Recommendations</h4>
+  <p>The top 5 recommendations are:</p>            
+  <table class="table text-center">
+    <thead>
+      <tr>
+        <th class="text-center">No. </th>
+        <th class="text-center">Channel</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td id="channel1">Channel 1</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td id="channel2">Channel 2</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td id="channel3">Channel 3</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td id="channel4">Channel 4</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td id="channel5">Channel 5</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<script type="text/javascript">
+    var pref1=""
+    var pref2=""
+    var pref3=""
+    $('.product_list a').click(function(){
+    $('#selected_product').text($(this).text());
+  });
+    $('.video_list a').click(function(){
+    $('#selected_video').text($(this).text());
+  });
+    $('.pref_list1 a').click(function(){
+    $('#selected_preference_1').text($(this).text());
+    pref1 = document.getElementById("selected_preference_1").textContent
+    
+    if (pref1==pref2 || pref1==pref3)
+    {
+      document.getElementById("selected_preference_1").textContent = "Choose an option";
+    }
+    if (pref1=='Product Category')
+    {
+      document.getElementById("pref22").style.display = "block"
+      document.getElementById("pref32").style.display = "block"
+      document.getElementById("pref23").style.display = "block"
+      document.getElementById("pref33").style.display = "block"
+
+      document.getElementById("pref21").style.display = "none"
+      document.getElementById("pref31").style.display = "none"
+    }
+    if (pref1=='Video Category')
+    {
+      document.getElementById("pref21").style.display = "block"
+      document.getElementById("pref31").style.display = "block"
+      document.getElementById("pref23").style.display = "block"
+      document.getElementById("pref33").style.display = "block"
+
+      document.getElementById("pref22").style.display = "none"
+      document.getElementById("pref32").style.display = "none"
+    }
+    if (pref1=='Product Description')
+    {
+      document.getElementById("pref21").style.display = "block"
+      document.getElementById("pref31").style.display = "block"
+      document.getElementById("pref22").style.display = "block"
+      document.getElementById("pref32").style.display = "block"
+
+      document.getElementById("pref23").style.display = "none"
+      document.getElementById("pref33").style.display = "none"
+    }
+  });
+    $('.pref_list2 a').click(function(){
+    $('#selected_preference_2').text($(this).text());
+    pref2 = document.getElementById("selected_preference_2").textContent
+    if (pref1==pref2 || pref2==pref3)
+    {
+      document.getElementById("selected_preference_2").textContent = "Choose an option";
+    }
+    if (pref2=='Product Category')
+    {
+      if (pref1=='Video Category')
+      {
+          document.getElementById("pref31").style.display = "none"
+          document.getElementById("pref32").style.display = "none"
+          document.getElementById("pref33").style.display = "block"
+          
+      }
+      else if (pref1=='Product Description')
+      {
+          document.getElementById("pref31").style.display = "none"
+          document.getElementById("pref32").style.display = "block"
+          document.getElementById("pref33").style.display = "none"
+      }
+      
+      
+    }
+    if (pref2=='Video Category')
+    {
+      if (pref1=='Product Category')
+      {
+          document.getElementById("pref31").style.display = "none"
+          document.getElementById("pref32").style.display = "none"
+          document.getElementById("pref33").style.display = "block"
+          
+      }
+      else if (pref1=='Product Description')
+      {
+          document.getElementById("pref31").style.display = "block"
+          document.getElementById("pref32").style.display = "none"
+          document.getElementById("pref33").style.display = "none"
+      }
+      
+    }
+    if (pref2=='Product Description')
+    {
+      if (pref1=='Product Category')
+      {
+          document.getElementById("pref31").style.display = "none"
+          document.getElementById("pref32").style.display = "block"
+          document.getElementById("pref33").style.display = "none"
+          
+      }
+      else if (pref1=='Video Category')
+      {
+          document.getElementById("pref31").style.display = "block"
+          document.getElementById("pref32").style.display = "none"
+          document.getElementById("pref33").style.display = "none"
+      }
+      
+    }
+  });
+    $('.pref_list3 a').click(function(){
+    $('#selected_preference_3').text($(this).text());
+    pref3 = document.getElementById("selected_preference_3").textContent
+    if (pref1==pref3 || pref2==pref3)
+    {
+      document.getElementById("selected_preference_3").textContent = "Choose an option";
+    }
+  });
+
+</script>
+
+</body>
+</html>
