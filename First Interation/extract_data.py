@@ -29,7 +29,7 @@ def main():
         api_service_name, api_version, developerKey = DEVELOPER_KEY)
     index=0
     for i in range(7):
-        print(i)
+        # print(i)
         if i==0:
             request = youtube.search().list(
                 part="snippet",

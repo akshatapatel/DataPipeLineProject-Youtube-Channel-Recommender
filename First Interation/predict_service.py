@@ -9,6 +9,7 @@ from gensim import models
 import pickle
 import indico
 import get_thumbnail_tags
+import ast
 
 
 # In[77]:
@@ -21,7 +22,7 @@ class GetPredData():
     def get_data(self):
         # mydb = MySQLdb.connect(host="127.0.0.1", user="root", passwd="DataPipeline", db = "DataPipeline")
         # youtube_data = pd.read_sql("""SELECT * from USVideos""",con=mydb)
-        youtube_data = pd.read_csv('USVideos_updated.csv')
+        youtube_data = pd.read_csv('YoutubeData_updated.csv')
         return youtube_data
 
 
@@ -57,7 +58,7 @@ class PredictHandler(GetPredData):
             pc_kw_similarity = 0.0
             
         pc_tag_similarity = []
-        #MODIFY FOR TAG FORMAT
+        #MODIFY FOR TAG FORMAT AND HANDLE MISSING VALUES
         for tag in yt_t.split('|'): #for each tag, repeat the same procedure as above
             list_tag = [word for word in tag.split() if word in load_model.w2v.vocab]
             if list_pc and list_tag: #if lists are both non-empty, calculate their similarity
@@ -155,8 +156,9 @@ class PredictHandler(GetPredData):
         pc_avg = np.average((pc_cn_similarity, pc_tag_similarity_avg, pc_kw_similarity))
         vc_avg = np.average((vc_cn_similarity, vc_tag_similarity_avg, vc_kw_similarity))
         desc_avg = np.average((desc_cn_similarity, desc_tag_similarity_avg, desc_kw_similarity))
+        
 
-        similarity_score = np.average((pc_avg,vc_avg,desc_avg), weights = user_weight) #perform weighted average of the above, based on weights provided by user
+        similarity_score = (user_weight[0]*pc_avg) + (user_weight[1]*vc_avg) + (user_weight[1]*desc_avg) #perform weighted average of the above, based on weights provided by user
 
         return similarity_score
     
@@ -164,25 +166,23 @@ class PredictHandler(GetPredData):
         user_pc = product_category
         user_vc = video_category
         user_desc = product_description
-        user_weight = weightage
+        user_weight = [float(wght) for wght in weightage.split(',')]
 
         youtube_data = self.get_text()
-        yt_cn_all = youtube_data['category_name'].str[:-1]
+        yt_cn_all = youtube_data['category_name']
         yt_t_all = youtube_data['tags']
-        yt_thumbnail_all = youtube_data['thumbnail_link'] #CHANGE BASED ON PRE-COMPUTED INFO
+        yt_thumbnail_all = youtube_data['thumbnail_tags']
 
         similarity_score_all = []
 
         sent = indico.TextAnalysis()
         user_desc_df = sent.get_keywords(user_desc)
 
-        thumb_tag = get_thumbnail_tags.ThumbnailTags() #CHANGE BASED ON PRE-COMPUTED INFO
         for i in range(yt_cn_all.shape[0]):
             print(i)
 
-            yt_thumb_kw = thumb_tag.get_tags(yt_thumbnail_all.iloc[i]) #CHANGE BASED ON PRE-COMPUTED INFO
-            similarity_score_all.append(self.get_similarity_score(user_pc, user_vc, user_desc_df, user_weight, yt_cn_all.iloc[i], yt_t_all.iloc[i], yt_thumb_kw)) 
-            #add thumbnail if done
+            similarity_score_all.append(self.get_similarity_score(user_pc, user_vc, user_desc_df, user_weight, yt_cn_all.iloc[i], yt_t_all.iloc[i], yt_thumbnail_all.iloc[i])) 
+            
 
         return similarity_score_all, youtube_data
 
@@ -191,7 +191,7 @@ class PredictHandler(GetPredData):
 class RecommendationHandler(PredictHandler):
     def recommend_channel(self, product_category, video_category, product_description, weightage): #ADD COMMENTS SENTIMENT FEATURE
         similarity_score_all, youtube_data = np.array(self.predict(product_category, video_category, product_description, weightage))
-        sent = indico.TextAnalysis()
+        # sent = indico.TextAnalysis()
 
         #yt_sentiment = sent.get_sentiment(list(youtube_data['comments'].values))
 
@@ -199,10 +199,17 @@ class RecommendationHandler(PredictHandler):
         df_category = youtube_data.groupby('channel_title', as_index=False).mean().sort_values(by=['similarity_score'], ascending=False)
         df_category['diff_likes_dislikes'] = df_category['likes'] - df_category['dislikes']
         top_5_channels = df_category.iloc[:10].sort_values(by=['diff_likes_dislikes'], ascending=False).iloc[:5]
-        list_of_names = top_5_channels['channel_title'].iloc[:5].values
+        # print(top_5_channels[['channel_title','likes','dislikes','views','subscribers','sentiment_score']])
 
-        return ",".join(list_of_names)
+        results = top_5_channels[['channel_title','likes','dislikes','views','subscribers','sentiment_score']].iloc[:5]
+        list_of_channels = results['channel_title'].values.tolist()
+        list_of_likes = results['likes'].values.tolist()
+        list_of_dislikes = results['dislikes'].values.tolist()
+        list_of_views = results['views'].values.tolist()
+        list_of_subscribers = results['subscribers'].values.tolist()
+        list_of_sentiment_score = results['sentiment_score'].values.tolist()
+        full_list = [str(list_of_channels),str(list_of_likes),str(list_of_dislikes),str(list_of_views),str(list_of_subscribers),str(list_of_sentiment_score)]
 
+        return "-".join(full_list)
 
-
-
+       
