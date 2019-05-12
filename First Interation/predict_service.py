@@ -20,7 +20,7 @@ class LoadModel():
 
 class GetPredData():
     def get_data(self):
-        mydb = MySQLdb.connect(host="127.0.0.1", user="root", passwd="DataPipeline", db = "DataPipeline")
+        mydb = MySQLdb.connect(host="127.0.0.1", user="root", passwd="xxxx", db = "DataPipeline")
         youtube_data = pd.read_sql("""SELECT * from YoutubeData""",con=mydb)
         # youtube_data = pd.read_csv('YoutubeData_updated.csv')
         return youtube_data

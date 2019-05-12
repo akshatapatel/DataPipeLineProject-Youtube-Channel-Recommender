@@ -12,7 +12,7 @@ from PIL import Image
 from io import BytesIO
 
 
-subscription_key = '346e6becce924928a4b137da4d4cf4a7'
+subscription_key = 'xxxxxx'
 assert subscription_key
 
 vision_base_url = "https://eastus.api.cognitive.microsoft.com/vision/v2.0/"
