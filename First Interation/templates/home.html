@@ -119,11 +119,12 @@ h4,h5,h6, td,th
               document.getElementById("recommendations").style.display = "none";
               document.getElementById("plots").style.display = "none";
               document.getElementById("loader").style.display = "block";
+              
               var client = new HttpClient();
               client.get('http://127.0.0.1:3000/recommend?product_category='+product_category+'&video_category='+video_category+'&product_description='+product_descr+'&feature_weights='+feature_imp_order, function(response) {
-                // console.log(response)
+                console.log(response)
                 var response_list = response.split("-")
-                
+                console.log(response_list)
                 var channel_names = response_list[0].substring(1,response_list[0].length-1).split(",")
                 console.log(channel_names)
                   
@@ -217,12 +218,12 @@ h4,h5,h6, td,th
   Plotly.newPlot('plot5_sentiment', data_sentiment, {title: 'Sentiment Score',
   yaxis: {title: 'Score'},
   xaxis: {title:'Channel Name'}}, {showSendToCloud:true});
-                  
-              });
                   document.getElementById("loader").style.display = "none";
                   document.getElementById("submit").style.display = "block";
                   document.getElementById("recommendations").style.display = "block";
                   document.getElementById("plots").style.display = "block";
+              });
+                  
             
           }
           else

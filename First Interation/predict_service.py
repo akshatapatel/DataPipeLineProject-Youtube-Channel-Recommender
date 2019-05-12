@@ -58,8 +58,8 @@ class PredictHandler(GetPredData):
             pc_kw_similarity = 0.0
             
         pc_tag_similarity = []
-        #MODIFY FOR TAG FORMAT AND HANDLE MISSING VALUES
-        for tag in yt_t.split('|'): #for each tag, repeat the same procedure as above
+        
+        for tag in yt_t: #for each tag, repeat the same procedure as above
             list_tag = [word for word in tag.split() if word in load_model.w2v.vocab]
             if list_pc and list_tag: #if lists are both non-empty, calculate their similarity
                 pc_tag_similarity.append(load_model.w2v.n_similarity(list_pc, list_tag))
@@ -87,8 +87,8 @@ class PredictHandler(GetPredData):
             
 
         vc_tag_similarity = []
-        #MODIFY FOR TAG FORMAT
-        for tag in yt_t.split('|'):
+        
+        for tag in yt_t:
             list_tag = [word for word in tag.split() if word in load_model.w2v.vocab]
             if list_vc and list_tag:
                 vc_tag_similarity.append(load_model.w2v.n_similarity(list_vc, list_tag))
@@ -133,8 +133,8 @@ class PredictHandler(GetPredData):
 
         desc_tag_similarity = []
 
-        #MODIFY FOR TAG FORMAT
-        for tag in yt_t.split('|'): #for each tag
+        
+        for tag in yt_t: #for each tag
             list_tag = [word for word in tag.split() if word in load_model.w2v.vocab]
             #if both lists are not empty, get similarity of every word in the description to the tag
             desc_tag_similarity_each = []
@@ -179,7 +179,6 @@ class PredictHandler(GetPredData):
         user_desc_df = sent.get_keywords(user_desc)
 
         for i in range(yt_cn_all.shape[0]):
-            print(i)
 
             similarity_score_all.append(self.get_similarity_score(user_pc, user_vc, user_desc_df, user_weight, yt_cn_all.iloc[i], yt_t_all.iloc[i], yt_thumbnail_all.iloc[i])) 
             
@@ -191,9 +190,7 @@ class PredictHandler(GetPredData):
 class RecommendationHandler(PredictHandler):
     def recommend_channel(self, product_category, video_category, product_description, weightage): #ADD COMMENTS SENTIMENT FEATURE
         similarity_score_all, youtube_data = np.array(self.predict(product_category, video_category, product_description, weightage))
-        # sent = indico.TextAnalysis()
-
-        #yt_sentiment = sent.get_sentiment(list(youtube_data['comments'].values))
+        
 
         youtube_data['similarity_score'] = similarity_score_all
         df_category = youtube_data.groupby('channel_title', as_index=False).mean().sort_values(by=['similarity_score'], ascending=False)
