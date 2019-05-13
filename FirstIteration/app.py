@@ -7,11 +7,9 @@ app = Flask(__name__)
 # app.config['CORS_HEADERS'] = 'Content-Type'
 
 @app.route("/")
-# @cross_origin(origin='*',headers=['Content-Type','Authorization'])
-
 def home():
     return  render_template("home.html")
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, host="0.0.0.0")

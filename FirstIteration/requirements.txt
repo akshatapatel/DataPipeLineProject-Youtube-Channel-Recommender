@@ -1,0 +1,7 @@
+Flask
+mysql-connector
+tornado>=5.0.1
+mysqlclient
+pandas
+numpy
+gensim
